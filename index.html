@@ -3,7 +3,6 @@
 <head>
     <title>Talkdesk Demo Timer</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="style-display.css">
 </head>
 <body>
     <div id="control-panel">
@@ -14,10 +13,22 @@
         <button id="reset-times-btn">Reset All Times to 0</button>
         <form id="topic-form">
             </form>
-        <button id="start-demo-btn">Start Full Demo Sequence</button>
-        <div id="iframe-container" class="hidden">
-            <h3 id="current-topic-name"></h3>
-            <iframe id="timer-iframe" src="display.html" frameborder="0"></iframe>
+        
+        <div class="button-group">
+            <button id="start-demo-btn">Start Full Demo Sequence</button>
+            <button id="open-display-btn">Open Full-Screen Timer URL</button>
+        </div>
+
+        <div id="embedded-timer-status">
+            <h3 id="current-topic-name">Ready</h3>
+            <div id="embedded-time">00:00</div>
+        </div>
+    </div>
+
+    <div id="timer-screen" class="full-screen-display hidden">
+        <div id="visual-indicator">
+            <div id="screen-timer-text">00:00</div>
+            <div id="screen-topic-text">Ready</div>
         </div>
     </div>
 
