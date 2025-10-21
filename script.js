@@ -13,7 +13,8 @@ const TOPICS = [
 ];
 
 // Helper variables
-let currentTopic = null;
+let demoQueue = []; // Holds the list of topics to run
+let currentTopicIndex = -1;
 let countdownInterval = null;
 let totalTimeSeconds = 0;
 let remainingTimeSeconds = 0;
@@ -22,20 +23,31 @@ let remainingTimeSeconds = 0;
 const startButton = document.getElementById('start-demo-btn');
 const resetButton = document.getElementById('reset-times-btn');
 const topicForm = document.getElementById('topic-form');
-const currentTimerStatusDiv = document.getElementById('current-timer-status');
+const iframeContainer = document.getElementById('iframe-container');
+const iframe = document.getElementById('timer-iframe');
 const topicNameDisplay = document.getElementById('current-topic-name');
-const timeDisplay = document.getElementById('remaining-time');
-const visualIndicator = document.getElementById('visual-indicator');
-const screenTimerText = document.getElementById('screen-timer-text');
-const screenTopicText = document.getElementById('screen-topic-text');
+const totalMinutesDisplay = document.getElementById('total-minutes');
 
+// --- INITIAL SETUP AND UTILITIES ---
 
-// --- INITIAL SETUP AND RESETS ---
+function calculateTotalTime() {
+    let totalMinutes = 0;
+    const timeInputs = document.querySelectorAll('.time-input');
+    timeInputs.forEach(input => {
+        const duration = parseInt(input.value) || 0;
+        // Only tally if the box is checked AND time > 0
+        const isChecked = input.parentElement.querySelector('input[type="checkbox"]').checked;
+        if (isChecked && duration > 0) {
+            totalMinutes += duration;
+        }
+    });
+    totalMinutesDisplay.textContent = totalMinutes;
+}
+
 function generateTopicChecklist() {
     TOPICS.forEach(topic => {
         const div = document.createElement('div');
         div.classList.add('topic-item');
-        // Set default value to "0" to fix the input issue
         div.innerHTML = `
             <input type="checkbox" id="check-${topic}" name="topic-check" value="${topic}">
             <label for="check-${topic}">${topic}</label>
@@ -44,6 +56,10 @@ function generateTopicChecklist() {
         `;
         topicForm.appendChild(div);
     });
+
+    // Add listener to recalculate total time whenever a value changes
+    topicForm.addEventListener('change', calculateTotalTime);
+    topicForm.addEventListener('input', calculateTotalTime);
 }
 
 function resetAllTimes() {
@@ -52,29 +68,41 @@ function resetAllTimes() {
         input.value = "0";
         input.parentElement.querySelector('input[type="checkbox"]').checked = false;
     });
+    calculateTotalTime();
     alert("All topic times have been reset to 0 and checkboxes cleared.");
 }
 
-// --- TIMER LOGIC ---
 function formatTime(seconds) {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
-function updateVisualIndicator(remaining, total) {
-    const percentage = total === 0 ? 0 : (remaining / total) * 100;
+// --- IFRAME COMMUNICATION (To update the visual timer) ---
+function updateIframeDisplay(topicName, timeString, colorClass, topicIndex) {
+    // Check if the iframe content is loaded before sending messages
+    if (iframe.contentWindow) {
+        iframe.contentWindow.postMessage({
+            topic: topicName,
+            time: timeString,
+            color: colorClass,
+            // Pass the current state to the iframe
+        }, '*'); 
+    }
+}
+
+// --- TIMER LOGIC ---
+
+function updateVisualIndicator(remaining) {
+    const visualDiv = iframe.contentDocument.getElementById('visual-indicator');
     
-    visualIndicator.className = ''; // Reset class
-    
-    if (percentage > 66) {
-        visualIndicator.classList.add('green');
-    } else if (percentage > 33) {
-        visualIndicator.classList.add('yellow');
-    } else if (percentage > 0) {
-        visualIndicator.classList.add('red');
+    // Check the new color thresholds
+    if (remaining <= 10) {
+        return 'red';      // RED: 10 seconds or less
+    } else if (remaining <= 60) {
+        return 'yellow';   // YELLOW: 1 minute (60 seconds) or less
     } else {
-        visualIndicator.classList.add('time-up');
+        return 'green';    // GREEN: More than 1 minute
     }
 }
 
@@ -82,17 +110,24 @@ function runCountdown() {
     remainingTimeSeconds--;
 
     const timeString = formatTime(Math.max(0, remainingTimeSeconds));
-
-    timeDisplay.textContent = timeString;
-    screenTimerText.textContent = timeString;
-
-    updateVisualIndicator(remainingTimeSeconds, totalTimeSeconds);
+    const colorClass = updateVisualIndicator(remainingTimeSeconds);
+    
+    // Send updated data to the iframe
+    updateIframeDisplay(demoQueue[currentTopicIndex].name, timeString, colorClass);
 
     if (remainingTimeSeconds <= 0) {
         clearInterval(countdownInterval);
-        topicNameDisplay.textContent = `${currentTopic}: TIME UP!`;
-        screenTopicText.textContent = `${currentTopic}: TIME UP!`;
-        // In a real app, you might auto-start the next topic here.
+        topicNameDisplay.textContent = `${demoQueue[currentTopicIndex].name}: TIME UP!`;
+        
+        // ** MOVE TO NEXT TOPIC **
+        currentTopicIndex++;
+        if (currentTopicIndex < demoQueue.length) {
+            startTimer(demoQueue[currentTopicIndex].name, demoQueue[currentTopicIndex].duration);
+        } else {
+            // Demo sequence finished
+            topicNameDisplay.textContent = "DEMO SEQUENCE COMPLETE!";
+            updateIframeDisplay("Demo Complete", "00:00", 'time-up');
+        }
     }
 }
 
@@ -104,52 +139,74 @@ function startTimer(topicName, durationMinutes) {
     totalTimeSeconds = durationMinutes * 60;
     remainingTimeSeconds = totalTimeSeconds;
     
-    // Check if time is 0 and prevent starting
+    // This check should already be handled when building the queue, but keep as a safeguard
     if (totalTimeSeconds <= 0) {
-        alert(`Time for "${topicName}" is set to 0. Please set a time greater than 0.`);
+        currentTopicIndex++; 
+        if (currentTopicIndex < demoQueue.length) {
+             startTimer(demoQueue[currentTopicIndex].name, demoQueue[currentTopicIndex].duration);
+        }
         return;
     }
 
-    currentTopic = topicName;
+    topicNameDisplay.textContent = `${currentTopicIndex + 1}/${demoQueue.length}: ${topicName}`;
+    iframeContainer.classList.remove('hidden');
+
+    // Initial display and start
+    const initialTimeString = formatTime(remainingTimeSeconds);
+    updateIframeDisplay(topicName, initialTimeString, updateVisualIndicator(remainingTimeSeconds));
     
-    topicNameDisplay.textContent = topicName;
-    screenTopicText.textContent = topicName;
-    currentTimerStatusDiv.classList.remove('hidden');
-    
-    // Initial update before the interval starts
-    runCountdown(); 
-    
-    // Start the countdown
     countdownInterval = setInterval(runCountdown, 1000);
+}
+
+function startDemoSequence() {
+    demoQueue = []; // Clear the old queue
+
+    // 1. Build the queue from checked topics with time > 0
+    const checkedTopics = Array.from(document.querySelectorAll('input[name="topic-check"]:checked'));
+    checkedTopics.forEach(checkbox => {
+        const topicName = checkbox.value;
+        const timeInputId = `time-${topicName}`;
+        const duration = parseInt(document.getElementById(timeInputId).value) || 0;
+        
+        if (duration > 0) {
+            demoQueue.push({ name: topicName, duration: duration });
+        }
+    });
+
+    if (demoQueue.length === 0) {
+        alert("Please check topics and ensure they have a time greater than 0 minutes to start the sequence.");
+        return;
+    }
+
+    // 2. Start the first topic
+    currentTopicIndex = 0;
+    startTimer(demoQueue[currentTopicIndex].name, demoQueue[currentTopicIndex].duration);
 }
 
 // --- EVENT LISTENERS ---
 
-startButton.addEventListener('click', () => {
-    const checkedTopics = Array.from(document.querySelectorAll('input[name="topic-check"]:checked'));
-
-    if (checkedTopics.length === 0) {
-        alert("Please check a topic and set its time (min) to start the demo.");
-        return;
-    }
-
-    // Get the first checked topic and its time
-    const firstTopicCheckbox = checkedTopics[0];
-    const firstTopicName = firstTopicCheckbox.value;
-    const timeInputId = `time-${firstTopicName}`;
-    
-    // Use parseInt() to ensure we get a number, defaulting to 0 if input is invalid/blank
-    const duration = parseInt(document.getElementById(timeInputId).value) || 0; 
-    
-    startTimer(firstTopicName, duration);
-});
-
+startButton.addEventListener('click', startDemoSequence);
 resetButton.addEventListener('click', resetAllTimes);
 
-// The "Open Full-Screen Timer" button listener
-document.getElementById('open-display-btn').addEventListener('click', () => {
-    alert("Open your repository's live URL in a second, maximized browser window to use the full-screen timer display.");
-});
+// The "Open Full-Screen Timer" button is no longer needed but we'll remove its listener
 
 // Run this when the page loads
 generateTopicChecklist();
+calculateTotalTime(); 
+
+// Handle messages from the parent window (for the iframe content)
+window.addEventListener('message', function(event) {
+    const data = event.data;
+    if (data.topic) {
+        // Ensure the display elements exist if we are in the iframe window
+        const visualIndicator = document.getElementById('visual-indicator');
+        const screenTimerText = document.getElementById('screen-timer-text');
+        const screenTopicText = document.getElementById('screen-topic-text');
+        
+        if (visualIndicator) {
+            visualIndicator.className = 'full-screen-display ' + data.color;
+            screenTimerText.textContent = data.time;
+            screenTopicText.textContent = data.topic;
+        }
+    }
+});
