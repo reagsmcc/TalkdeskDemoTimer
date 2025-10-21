@@ -1,59 +1,100 @@
-/* style.css */
-
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f4f4f4;
+/* Custom Talkdesk Purple Color Palette */
+:root {
+    --talkdesk-purple: #5b2fa0; /* A rich, deep purple */
+    --talkdesk-light: #f5f0fb; /* Very light background */
+    --talkdesk-accent: #7a46c1; /* Lighter purple for buttons/accents */
+    --color-green: #4CAF50; /* Green (Time is good) */
+    --color-yellow: #FFC107; /* Yellow (Warning) */
+    --color-red: #F44336; /* Red (Urgent) */
 }
 
-/* --- CONTROL PANEL STYLES (Your screen) --- */
-#control-panel {
-    max-width: 600px;
-    margin: 20px auto;
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
     padding: 20px;
-    border: 1px solid #ccc;
+    background-color: var(--talkdesk-light);
+    color: #333;
+}
+
+/* --- CONTROL PANEL STYLES --- */
+#control-panel {
+    max-width: 650px;
+    margin: 0 auto;
+    padding: 30px;
     background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+    color: var(--talkdesk-purple);
+    border-bottom: 2px solid var(--talkdesk-accent);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
 }
 
 .topic-item {
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
+    padding: 8px 0;
+    border-bottom: 1px dashed #eee;
+    font-size: 1.1em;
 }
 
 .topic-item label {
     flex-grow: 1;
     margin-left: 10px;
+    cursor: pointer;
 }
 
 .time-input {
-    width: 50px;
-    text-align: right;
+    width: 40px;
+    padding: 5px;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 4px;
     margin-right: 5px;
 }
 
-/* Current timer status box on the control panel */
+/* Button Styling (Apply to all buttons) */
+button {
+    background-color: var(--talkdesk-accent);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    margin-top: 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: var(--talkdesk-purple);
+}
+
+/* Current timer status on control panel */
 #current-timer-status {
-    margin-top: 20px;
-    padding: 15px;
-    border: 2px solid #333;
+    margin-top: 25px;
+    padding: 20px;
+    border: 2px solid var(--talkdesk-purple);
+    border-radius: 8px;
     text-align: center;
 }
 
 #remaining-time {
-    font-size: 3em;
+    font-size: 2.5em;
     font-weight: bold;
+    color: var(--talkdesk-purple);
 }
 
-/* --- FULL-SCREEN DISPLAY STYLES (Client-facing screen) --- */
+/* --- FULL-SCREEN DISPLAY STYLES --- */
 
 .hidden {
     display: none !important;
 }
 
 .full-screen-display {
-    /* Ensures it takes up the full browser view when active */
     position: fixed;
     top: 0;
     left: 0;
@@ -63,13 +104,13 @@ body {
     justify-content: center;
     align-items: center;
     text-align: center;
-    transition: background-color 0.5s; /* Smooth color transitions */
+    transition: background-color 0.5s;
 }
 
 #visual-indicator {
     padding: 50px;
-    width: 80%;
-    height: 80%;
+    width: 100%; /* Take full width */
+    height: 100%; /* Take full height */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -77,9 +118,10 @@ body {
 }
 
 #screen-timer-text {
-    font-size: 15vw; /* Large, responsive font size */
+    font-size: 15vw;
     font-weight: 900;
     color: white;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* Shadow for better contrast */
 }
 
 #screen-topic-text {
@@ -87,30 +129,19 @@ body {
     color: white;
 }
 
-/* --- CONDITIONAL COLORS (The Core Requirement) --- */
+/* --- CONDITIONAL COLORS --- */
 
-/* GREEN: More than 66% remaining */
-.green {
-    background-color: #4CAF50; /* A pleasant green */
-}
-
-/* YELLOW: Between 33% and 66% remaining */
-.yellow {
-    background-color: #FFC107; /* An alert yellow/amber */
-}
-
-/* RED: Less than 33% remaining */
-.red {
-    background-color: #F44336; /* An urgent red */
-}
+.green { background-color: var(--color-green); }
+.yellow { background-color: var(--color-yellow); }
+.red { background-color: var(--color-red); }
 
 /* TIME UP: 0% remaining */
 .time-up {
     background-color: black;
-    animation: flash-red 1s infinite alternate; /* Subtle warning flash */
+    animation: flash-red 1s infinite alternate;
 }
 
 @keyframes flash-red {
     from { background-color: black; }
-    to { background-color: #F44336; }
+    to { background-color: var(--color-red); }
 }
