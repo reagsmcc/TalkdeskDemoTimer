@@ -1,0 +1,116 @@
+/* style.css */
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+/* --- CONTROL PANEL STYLES (Your screen) --- */
+#control-panel {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    background: white;
+}
+
+.topic-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.topic-item label {
+    flex-grow: 1;
+    margin-left: 10px;
+}
+
+.time-input {
+    width: 50px;
+    text-align: right;
+    margin-right: 5px;
+}
+
+/* Current timer status box on the control panel */
+#current-timer-status {
+    margin-top: 20px;
+    padding: 15px;
+    border: 2px solid #333;
+    text-align: center;
+}
+
+#remaining-time {
+    font-size: 3em;
+    font-weight: bold;
+}
+
+/* --- FULL-SCREEN DISPLAY STYLES (Client-facing screen) --- */
+
+.hidden {
+    display: none !important;
+}
+
+.full-screen-display {
+    /* Ensures it takes up the full browser view when active */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    transition: background-color 0.5s; /* Smooth color transitions */
+}
+
+#visual-indicator {
+    padding: 50px;
+    width: 80%;
+    height: 80%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#screen-timer-text {
+    font-size: 15vw; /* Large, responsive font size */
+    font-weight: 900;
+    color: white;
+}
+
+#screen-topic-text {
+    font-size: 4vw;
+    color: white;
+}
+
+/* --- CONDITIONAL COLORS (The Core Requirement) --- */
+
+/* GREEN: More than 66% remaining */
+.green {
+    background-color: #4CAF50; /* A pleasant green */
+}
+
+/* YELLOW: Between 33% and 66% remaining */
+.yellow {
+    background-color: #FFC107; /* An alert yellow/amber */
+}
+
+/* RED: Less than 33% remaining */
+.red {
+    background-color: #F44336; /* An urgent red */
+}
+
+/* TIME UP: 0% remaining */
+.time-up {
+    background-color: black;
+    animation: flash-red 1s infinite alternate; /* Subtle warning flash */
+}
+
+@keyframes flash-red {
+    from { background-color: black; }
+    to { background-color: #F44336; }
+}
